@@ -41,7 +41,7 @@ export class SuiWeb3Controller {
     return this.suiWeb3Service.getRankingList(gameId, startDate);
   }
 
-  @Get('asset-tracking/nft/:gameId/:walletAddress')
+  @Get('asset-tracking/nft/:gameId')
   @ApiResponse({
     status: 200,
     description: 'Return the game details for the given gameId.',
@@ -64,7 +64,7 @@ export class SuiWeb3Controller {
     );
   }
 
-  @Get('asset-tracking/coin/:gameId/:walletAddress')
+  @Get('asset-tracking/coin/:gameId')
   @ApiResponse({
     status: 200,
     description: 'Return the game details for the given gameId.',
@@ -86,7 +86,7 @@ export class SuiWeb3Controller {
       gameParamsDto.pageSize,
     );
   }
-  @Get('event/:gameId/:walletAddress')
+  @Get('event/:gameId')
   @ApiResponse({
     status: 200,
     description: 'Return the game details for the given gameId.',

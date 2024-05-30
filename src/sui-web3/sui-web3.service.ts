@@ -73,6 +73,17 @@ export class SuiWeb3Service {
     return this.parseNftAssetTrackingData(result).slice(1);
   }
 
+  async getGameTransactionCount(
+    gameId: number,
+    startDate: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const game = await this.gameRepository.findOne({ where: { id: gameId } });
+    const result = await this.queryRankingList(game, startDate, page, pageSize);
+    return this.parseRankingData(result).slice(1);
+  }
+
   async getEvent(
     gameId: number,
     walletAddress: string,
@@ -130,6 +141,14 @@ export class SuiWeb3Service {
         page,
         pageSize,
       ),
+      resultCacheExpireMillis: 86400000,
+    };
+    return await this.getQuery(query);
+  }
+
+  async queryGameTransactionCount(startDate: string, packageIds: string[]) {
+    const query = {
+      query: this.createGameTransactionCount(startDate, packageIds),
       resultCacheExpireMillis: 86400000,
     };
     return await this.getQuery(query);
@@ -518,6 +537,22 @@ WHERE
     )
 ORDER BY block_time DESC
 LIMIT ${pageSize}
+  `;
+  }
+
+  private createGameTransactionCount(startDate, packageIds) {
+    // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
+    const packageIdsCondition = packageIds
+      .map((id) => `'${id}'`)
+      .join(' or package_id = ');
+
+    return `
+    SELECT count(*)
+    FROM sui_mainnet.events
+    WHERE block_time >= DATE('${startDate}')
+    AND (
+        package_id = ${packageIdsCondition}
+    )
   `;
   }
 }
