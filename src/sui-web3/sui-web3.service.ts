@@ -26,9 +26,14 @@ export class SuiWeb3Service {
     };
   }
 
-  async getRankingList(id: number, startDate: string) {
+  async getRankingList(
+    id: number,
+    startDate: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
     const game = await this.gameRepository.findOne({ where: { id } });
-    const result = await this.queryRankingList(game, startDate);
+    const result = await this.queryRankingList(game, startDate, page, pageSize);
     return this.parseRankingData(result).slice(1);
   }
 
@@ -36,12 +41,16 @@ export class SuiWeb3Service {
     gameId: number,
     walletAddress: string,
     startDate: string,
+    page: number = 1,
+    pageSize: number = 10,
   ) {
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
     const result = await this.queryCoinAssetTracking(
       game,
       walletAddress,
       startDate,
+      page,
+      pageSize,
     );
     return this.parseCoinAssetTrackingData(result).slice(1);
   }
@@ -50,30 +59,54 @@ export class SuiWeb3Service {
     gameId: number,
     walletAddress: string,
     startDate: string,
+    page: number = 1,
+    pageSize: number = 10,
   ) {
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
     const result = await this.queryNftAssetTracking(
       game,
       walletAddress,
       startDate,
+      page,
+      pageSize,
     );
     return this.parseNftAssetTrackingData(result).slice(1);
+  }
+
+  async getEvent(
+    gameId: number,
+    walletAddress: string,
+    startDate: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) {
+    const game = await this.gameRepository.findOne({ where: { id: gameId } });
+    const result = await this.queryEvent(
+      game,
+      walletAddress,
+      startDate,
+      page,
+      pageSize,
+    );
+    return this.parseEvent(result).slice(1);
   }
 
   private async queryCoinAssetTracking(
     game: Game,
     walletAddress: string,
     startDate: string,
+    page: number,
+    pageSize: number,
   ) {
     const packageIds = game.packageId;
-    const limit = 30;
 
     const query = {
       query: this.createCoinAssetTrackingQuery(
         startDate,
         walletAddress,
         packageIds,
-        limit,
+        page,
+        pageSize,
       ),
       resultCacheExpireMillis: 86400000,
     };
@@ -84,29 +117,63 @@ export class SuiWeb3Service {
     game: Game,
     walletAddress: string,
     startDate: string,
+    page: number,
+    pageSize: number,
   ) {
     const packageIds = game.packageId;
-    const limit = 30;
 
     const query = {
       query: this.createNftAssetTrackingQuery(
         startDate,
         walletAddress,
         packageIds,
-        limit,
+        page,
+        pageSize,
       ),
       resultCacheExpireMillis: 86400000,
     };
     return await this.getQuery(query);
   }
 
-  async queryRankingList(game: Game, startDate: string) {
+  async queryRankingList(
+    game: Game,
+    startDate: string,
+    page: number,
+    pageSize: number,
+  ) {
     const packageIds = game.packageId;
-    const eventType = 'arcade_champion::HeroUpdated';
-    const limit = 20;
+    //const eventType = 'arcade_champion::HeroUpdated';
+    const eventType = game.eventType;
+    const query = {
+      query: this.createRankingQuery(
+        startDate,
+        packageIds,
+        eventType,
+        page,
+        pageSize,
+      ),
+      resultCacheExpireMillis: 86400000,
+    };
+    return await this.getQuery(query);
+  }
+
+  async queryEvent(
+    game: Game,
+    walletAddress: string,
+    startDate: string,
+    page: number,
+    pageSize: number,
+  ) {
+    const packageIds = game.packageId;
 
     const query = {
-      query: this.createRankingQuery(startDate, packageIds, eventType, limit),
+      query: this.createEventQuery(
+        startDate,
+        walletAddress,
+        packageIds,
+        page,
+        pageSize,
+      ),
       resultCacheExpireMillis: 86400000,
     };
     return await this.getQuery(query);
@@ -272,16 +339,54 @@ export class SuiWeb3Service {
     });
   }
 
-  private createRankingQuery(startDate, packageIds, eventType, limit) {
+  private parseEvent(data: string): any[] {
+    const lines = data.trim().split('\n');
+    return lines.map((line) => {
+      const [
+        transaction_block_digest,
+        checkpoint_sequence_number,
+        checkpoint_digest,
+        event_seq,
+        sender,
+        package_id,
+        transaction_module,
+        type,
+        bcs,
+        parsed_json,
+        block_time,
+        process_time,
+      ] = line.split(',');
+      return {
+        transaction_block_digest,
+        checkpoint_sequence_number,
+        checkpoint_digest,
+        event_seq,
+        sender,
+        package_id,
+        transaction_module,
+        type,
+        bcs,
+        parsed_json,
+        block_time: new Date(block_time),
+        process_time,
+      };
+    });
+  }
+
+  private createRankingQuery(startDate, packageIds, eventType, page, pageSize) {
     // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
     const packageIdsCondition = packageIds
       .map((id) => `'${id}'`)
       .join(' or e.package_id = ');
 
+    const eventTypeCondition = eventType
+      ? `AND type like '%${eventType}%'`
+      : '';
+
     return `
     SELECT
         sender as user,
-        COUNT(distinct transaction_block_digest) as hero_updated_count,
+        COUNT(distinct transaction_block_digest),
         MIN(block_time) as first_updated,
         MAX(block_time) as last_updated
     FROM sui_mainnet.events as e
@@ -289,10 +394,10 @@ export class SuiWeb3Service {
     AND (
         e.package_id = ${packageIdsCondition}
     )
-    AND type like '%${eventType}%'
+    ${eventTypeCondition} 
     GROUP BY 1
     ORDER BY 2 DESC
-    LIMIT ${limit}
+    LIMIT ${pageSize}
   `;
   }
 
@@ -300,7 +405,8 @@ export class SuiWeb3Service {
     startDate,
     walletAddress,
     coinType,
-    limit,
+    page,
+    pageSize,
   ) {
     // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
 
@@ -326,14 +432,15 @@ WHERE
   AND
   owner_address = '${walletAddress}'
 ORDER BY block_time DESC  
-LIMIT ${limit}
+LIMIT ${pageSize}
   `;
   }
   private createNftAssetTrackingQuery(
     startDate,
     walletAddress,
     packageIds,
-    limit,
+    page,
+    pageSize,
   ) {
     console.log('API_KEY', this.API_KEY);
     console.log('API_KEY', this.HEADERS);
@@ -374,7 +481,47 @@ WHERE
     )
   AND (sender = '${walletAddress}' OR seller = '${walletAddress}' OR buyer = '${walletAddress}')
 ORDER BY block_time DESC  
-LIMIT ${limit}
+LIMIT ${pageSize}
+  `;
+  }
+
+  private createEventQuery(
+    startDate,
+    walletAddress,
+    packageIds,
+    page,
+    pageSize,
+  ) {
+    // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
+    const packageIdsCondition = packageIds
+      .map((id) => `'${id}'`)
+      .join(' or package_id = ');
+
+    return `
+    SELECT
+  transaction_block_digest,
+  checkpoint_sequence_number,
+  checkpoint_digest,
+  event_seq,
+  sender,
+  package_id,
+  transaction_module,
+  type,
+  bcs,
+  parsed_json,
+  block_time,
+  process_time
+FROM
+  sui_mainnet.events
+WHERE
+    block_time >= DATE('${startDate}')
+  AND
+  (
+        package_id = ${packageIdsCondition}
+    )
+  AND (sender = '${walletAddress}')
+ORDER BY block_time DESC
+LIMIT ${pageSize}
   `;
   }
 }

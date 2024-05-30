@@ -29,4 +29,13 @@ export class GameDto {
   @IsString()
   @IsOptional()
   readonly coinType?: string;
+
+  @ApiProperty({
+    description: 'The event type for the game',
+    example: 'game',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  readonly eventType?: string;
 }

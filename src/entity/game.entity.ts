@@ -13,4 +13,7 @@ export class Game {
 
   @Column()
   coinType: string;
+
+  @Column()
+  eventType: string;
 }
