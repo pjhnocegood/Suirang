@@ -48,7 +48,7 @@ export class SuiWeb3Controller {
   })
   @ApiResponse({ status: 404, description: 'Game not found.' })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(30000)
+  @CacheTTL(120000)
   getNFTAssetTracking(@Query() gameParamsDto: GameParamsDto) {
     if (!gameParamsDto.startDate) {
       const oneMonthAgo = new Date();
@@ -71,7 +71,7 @@ export class SuiWeb3Controller {
   })
   @ApiResponse({ status: 404, description: 'Game not found.' })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(30000)
+  @CacheTTL(120000)
   getCoinAssetTracking(@Query() gameParamsDto: GameParamsDto) {
     if (!gameParamsDto.startDate) {
       const oneMonthAgo = new Date();
@@ -93,7 +93,7 @@ export class SuiWeb3Controller {
   })
   @ApiResponse({ status: 404, description: 'Game not found.' })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(30000)
+  @CacheTTL(120000)
   getEvent(@Query() gameParamsDto: GameParamsDto) {
     if (!gameParamsDto.startDate) {
       const oneMonthAgo = new Date();
