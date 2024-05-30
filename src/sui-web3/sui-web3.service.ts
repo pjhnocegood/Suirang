@@ -429,8 +429,6 @@ WHERE
   coin_type = '${coinType}'
   AND
     block_time >= DATE('${startDate}')
-  AND
-  owner_address = '${walletAddress}'
 ORDER BY block_time DESC  
 LIMIT ${pageSize}
   `;
@@ -479,7 +477,6 @@ WHERE
   (
         package_id = ${packageIdsCondition}
     )
-  AND (sender = '${walletAddress}' OR seller = '${walletAddress}' OR buyer = '${walletAddress}')
 ORDER BY block_time DESC  
 LIMIT ${pageSize}
   `;
@@ -519,7 +516,6 @@ WHERE
   (
         package_id = ${packageIdsCondition}
     )
-  AND (sender = '${walletAddress}')
 ORDER BY block_time DESC
 LIMIT ${pageSize}
   `;
