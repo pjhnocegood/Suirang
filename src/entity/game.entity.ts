@@ -11,9 +11,21 @@ export class Game {
   @Column('simple-array')
   packageId: string[];
 
-  @Column()
+  @Column({ nullable: true })
   coinType: string;
 
-  @Column()
+  @Column({ nullable: true })
   eventType: string;
+
+  @Column({ nullable: true }) // 이 부분은 선택 사항에 따라 nullable 속성을 추가합니다.
+  websiteUrl: string;
+
+  @Column({ nullable: true })
+  discordUrl: string;
+
+  @Column({ nullable: true })
+  twitterUrl: string;
+
+  @Column({ nullable: true })
+  imageUrl: string;
 }

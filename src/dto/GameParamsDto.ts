@@ -1,10 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsDateString,
-  IsOptional,
-  IsString,
-  IsNumberString,
-} from 'class-validator';
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import { IsDateString, IsOptional, IsNumberString } from 'class-validator';
 import { PaginationQueryDto } from './PaginationQueryDto';
 
 export class GameParamsDto extends PaginationQueryDto {
@@ -15,11 +14,7 @@ export class GameParamsDto extends PaginationQueryDto {
   @IsNumberString()
   gameId: number;
 
-  @ApiProperty({
-    description: 'Wallet address of the user to retrieve',
-    type: 'string',
-  })
-  @IsString()
+  @ApiHideProperty()
   walletAddress: string;
 
   @ApiPropertyOptional({

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsArray, IsOptional, IsUrl } from 'class-validator';
 
 export class GameDto {
   @ApiProperty({
@@ -38,4 +38,40 @@ export class GameDto {
   @IsString()
   @IsOptional()
   readonly eventType?: string;
+
+  @ApiProperty({
+    description: 'The website URL of the game',
+    example: 'https://example.com',
+    required: false,
+  })
+  @IsUrl()
+  @IsOptional()
+  readonly websiteUrl?: string;
+
+  @ApiProperty({
+    description: 'The Discord URL of the game',
+    example: 'https://discord.gg/example',
+    required: false,
+  })
+  @IsUrl()
+  @IsOptional()
+  readonly discordUrl?: string;
+
+  @ApiProperty({
+    description: 'The Twitter URL of the game',
+    example: 'https://twitter.com/example',
+    required: false,
+  })
+  @IsUrl()
+  @IsOptional()
+  readonly twitterUrl?: string;
+
+  @ApiProperty({
+    description: 'The image URL of the game',
+    example: 'https://example.com/image.jpg',
+    required: false,
+  })
+  @IsUrl()
+  @IsOptional()
+  readonly imageUrl?: string;
 }
