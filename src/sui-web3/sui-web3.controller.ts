@@ -9,6 +9,8 @@ import { CacheTTL } from '@nestjs/common/cache';
 export class SuiWeb3Controller {
   constructor(private readonly suiWeb3Service: SuiWeb3Service) {}
 
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(1000 * 60 * 15)
   @Get('ranking/:gameId')
   @ApiResponse({
     status: 200,
