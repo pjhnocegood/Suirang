@@ -12,7 +12,7 @@ export class CreateCommunityDto {
 
   @ApiHideProperty()
   @IsInt()
-  transactionCount: number;
+  eventCount: number;
 
   @ApiProperty({
     example: 'This is a post content.',

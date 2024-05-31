@@ -564,11 +564,11 @@ LIMIT ${pageSize}
     // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
     const packageIdsCondition = packageIds
       .map((id) => `'${id}'`)
-      .join(' or package = ');
+      .join(' or package_id = ');
 
     let sqlQuery = `
     SELECT count(*)
-    FROM sui_mainnet.transactions
+    FROM sui_mainnet.events
     WHERE 1=1`; // 항상 참인 조건을 추가하여 WHERE 절을 시작합니다.
 
     if (startDate) {
@@ -576,11 +576,11 @@ LIMIT ${pageSize}
     }
 
     sqlQuery += ` AND (
-      package = ${packageIdsCondition}
+      package_id = ${packageIdsCondition}
   )`;
 
     if (walletAddress) {
-      sqlQuery += ` AND wallet_address = '${walletAddress}'`;
+      sqlQuery += ` AND sender = '${walletAddress}'`;
     }
 
     return sqlQuery;

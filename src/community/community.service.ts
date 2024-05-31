@@ -20,7 +20,7 @@ export class CommunityService {
       null,
       createCommunityDto.walletAddress,
     );
-    createCommunityDto.transactionCount = count;
+    createCommunityDto.eventCount = count;
     const community = this.communityRepository.create(createCommunityDto);
     return this.communityRepository.save(community);
   }

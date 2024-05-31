@@ -10,7 +10,7 @@ export class Community {
   walletAddress: string;
 
   @Column()
-  transactionCount: number;
+  eventCount: number;
 
   @Column()
   content: string;
