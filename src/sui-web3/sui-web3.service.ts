@@ -73,15 +73,23 @@ export class SuiWeb3Service {
     return this.parseNftAssetTrackingData(result).slice(1);
   }
 
-  async getGameTransactionCount(
+  async getGamesTransactionCount(
     gameId: number,
-    startDate: string,
-    page: number = 1,
-    pageSize: number = 10,
+    startDate?: string,
+    walletAddress?: string,
   ) {
     const game = await this.gameRepository.findOne({ where: { id: gameId } });
-    const result = await this.queryRankingList(game, startDate, page, pageSize);
-    return this.parseRankingData(result).slice(1);
+    const result = await this.queryGameTransactionCount(
+      game.packageId,
+      startDate,
+      walletAddress,
+    );
+    return this.parseGameTransactionCount(result);
+  }
+
+  async parseGameTransactionCount(data: string): Promise<number> {
+    const lines = data.trim().split('\n');
+    return Number(lines[1]);
   }
 
   async getEvent(
@@ -146,9 +154,17 @@ export class SuiWeb3Service {
     return await this.getQuery(query);
   }
 
-  async queryGameTransactionCount(startDate: string, packageIds: string[]) {
+  async queryGameTransactionCount(
+    packageIds: string[],
+    startDate: string,
+    walletAddress?,
+  ) {
     const query = {
-      query: this.createGameTransactionCount(startDate, packageIds),
+      query: this.createGameTransactionCount(
+        packageIds,
+        startDate,
+        walletAddress,
+      ),
       resultCacheExpireMillis: 86400000,
     };
     return await this.getQuery(query);
@@ -540,19 +556,33 @@ LIMIT ${pageSize}
   `;
   }
 
-  private createGameTransactionCount(startDate, packageIds) {
+  private createGameTransactionCount(
+    packageIds: string[],
+    startDate?: string,
+    walletAddress?: string,
+  ): string {
     // Package IDs를 SQL에 삽입할 수 있는 형식으로 변환
     const packageIdsCondition = packageIds
       .map((id) => `'${id}'`)
-      .join(' or package_id = ');
+      .join(' or package = ');
 
-    return `
+    let sqlQuery = `
     SELECT count(*)
-    FROM sui_mainnet.events
-    WHERE block_time >= DATE('${startDate}')
-    AND (
-        package_id = ${packageIdsCondition}
-    )
-  `;
+    FROM sui_mainnet.transactions
+    WHERE 1=1`; // 항상 참인 조건을 추가하여 WHERE 절을 시작합니다.
+
+    if (startDate) {
+      sqlQuery += ` AND block_time >= DATE('${startDate}')`;
+    }
+
+    sqlQuery += ` AND (
+      package = ${packageIdsCondition}
+  )`;
+
+    if (walletAddress) {
+      sqlQuery += ` AND wallet_address = '${walletAddress}'`;
+    }
+
+    return sqlQuery;
   }
 }

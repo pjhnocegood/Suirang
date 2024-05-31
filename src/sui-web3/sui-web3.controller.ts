@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { SuiWeb3Service } from './sui-web3.service';
 import { ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GameParamsDto } from '../dto/GameParamsDto';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheKey } from '@nestjs/cache-manager';
 import { CacheTTL } from '@nestjs/common/cache';
 @ApiTags('sui-web3')
 @Controller('sui-web3')

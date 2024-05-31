@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { CacheModule, CacheInterceptor } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CommunityModule } from './community/community.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     }),
     SuiWeb3Module,
     GameModule,
+    CommunityModule,
   ],
   controllers: [AppController],
   providers: [

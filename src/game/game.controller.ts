@@ -1,15 +1,42 @@
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseInterceptors,
+  Inject,
+} from '@nestjs/common';
 import { GameService } from './game.service';
-
-import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { GameDto } from '../dto/game.dto';
 import { Game } from '../entity/game.entity';
 import { UpdateGameDto } from '../dto/update-game.dto';
+import {
+  CacheInterceptor,
+  CacheKey,
+  CACHE_MANAGER,
+  Cache,
+} from '@nestjs/cache-manager';
+import { CacheTTL } from '@nestjs/common/cache';
 
 @ApiTags('games')
 @Controller('games')
+@UseInterceptors(CacheInterceptor)
 export class GameController {
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   @Post()
   @ApiResponse({
@@ -18,13 +45,36 @@ export class GameController {
   })
   @ApiBody({ type: GameDto })
   create(@Body() gameDto: GameDto): Promise<Game> {
+    this.cacheManager.del('games');
     return this.gameService.create(gameDto);
   }
 
   @Get()
-  @ApiResponse({ status: 200, description: 'Return all games.' })
-  findAll(): Promise<Game[]> {
-    return this.gameService.findAll();
+  @CacheTTL(1000 * 60 * 30)
+  @CacheKey('games')
+  @ApiOperation({ summary: 'Get all games with their rankings' })
+  @ApiQuery({
+    name: 'startDate',
+    type: String,
+    description:
+      'Optional. Start date for filtering game details (format: YYYY-MM-DD). If not provided, defaults to one month ago.',
+    example: '2024-05-01',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all games with their rankings',
+    type: [Game],
+  })
+  findAllGamesWithRankings(
+    @Query('startDate') startDate?: string,
+  ): Promise<any[]> {
+    if (!startDate) {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      startDate = oneMonthAgo.toISOString().split('T')[0];
+    }
+    return this.gameService.findAllGamesWithRanking(startDate);
   }
 
   @Get(':id')
@@ -58,6 +108,9 @@ export class GameController {
     @Param('id') id: number,
     @Body() updateGameDto: UpdateGameDto,
   ): Promise<Game> {
-    return this.gameService.update(id, updateGameDto);
+    this.cacheManager.del('games');
+    const result = this.gameService.update(id, updateGameDto);
+
+    return result;
   }
 }
