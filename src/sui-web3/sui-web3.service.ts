@@ -117,13 +117,11 @@ export class SuiWeb3Service {
     page: number,
     pageSize: number,
   ) {
-    const packageIds = game.packageId;
-
     const query = {
       query: this.createCoinAssetTrackingQuery(
         startDate,
         walletAddress,
-        packageIds,
+        game.coinType,
         page,
         pageSize,
       ),
