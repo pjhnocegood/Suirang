@@ -33,7 +33,6 @@ export class GameService {
     games: Game[],
     startDate: string,
   ): Promise<any[]> {
-    const rankingMap = new Map<number, number>(); // 게임 ID로 매핑
     const gameTransactionCountMap = new Map<number, number>();
 
     // 각 게임의 거래 횟수와 랭킹을 계산
@@ -50,12 +49,19 @@ export class GameService {
       (a, b) => b[1] - a[1],
     );
 
-    // 랭킹을 부여하여 게임들을 반환
-    return sortedGames.map(([gameId, count], index) => ({
+    const result = sortedGames.map(([gameId, transactionCount], index) => ({
       ...games.find((game) => game.id === gameId),
-      count,
-      rank: index + 1,
+      transactionCount,
+      ranking: index + 1,
     }));
+
+    for (const game of result) {
+      console.log(game);
+      await this.gameRepository.save(game);
+    }
+
+    // 랭킹을 부여하여 게임들을 반환
+    return result;
   }
 
   async findOne(id: number): Promise<Game> {

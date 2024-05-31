@@ -28,4 +28,10 @@ export class Game {
 
   @Column({ nullable: true })
   imageUrl: string;
+
+  @Column({ nullable: true })
+  ranking: number;
+
+  @Column({ nullable: true })
+  transactionCount: number;
 }
